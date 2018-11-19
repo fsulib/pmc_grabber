@@ -1,3 +1,7 @@
-nbproject/
-test2.php
-output/
+#Ignore all output files
+*
+
+#Don't ignore 
+!.gitignore
+!index.php
+!readme.md

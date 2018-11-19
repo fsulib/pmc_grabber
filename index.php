@@ -12,7 +12,7 @@ echo "Enter the desired output folder for files to be saved to and press [Enter]
 
 $searchNamespace = trim(fgets(STDIN));
 
-//Get the search terms from the user and use them to query eSearch 
+//Get the search terms from the user and use them to query eSearch
 echo "Enter the search terms to be used for PMC Grabber and press [Enter]: ";
 
 $searchTerm = trim(fgets(STDIN));
@@ -182,21 +182,19 @@ for($index = 0; $index < count($idListArray); $index++){
             $lname = $authors->Author[$i]->LastName->__toString();
             $fullname = $fname . " " . $lname;
             $authorArray[$i] = array("Firstname"=>$fname,"Lastname"=>$lname,"Fullname"=>$fullname);
-        }  
-
-  
+        }
 
    // Grant Number Parsing
-  $grantIDString = "";  
+  $grantIDString = "";
 if($grants == true){
         for ($i = 0; $i < count($grants->Grant); $i++){
             $grantIDString .= $grants->Grant[$i]->GrantID->__toString();
             if($i != (count($grants->Grant) - 1)){
                 $grantIDString .= ", ";
             }
-        } 
+        }
 }
-  
+
     // Keyword Parsing
 	$keywordString = "";
 	if($keywords == true){
@@ -206,7 +204,7 @@ if($grants == true){
                 $keywordString .= ", ";
             }
 	}
-	} 
+	}
 
     // ArticleID Parsing
         $articleIdArray = array();
@@ -216,30 +214,27 @@ if($grants == true){
             // Here is where we pick out which IDs we are interested in for inclusion in MODS record
             // Any idtype not here will not be captured going forward
             if(
-                    $idtype == "doi" || 
-                    $idtype == "pmc" || 
-                    $idtype == "mid" || 
-                    $idtype == "rid" || 
-                    $idtype == "eid" || 
+                    $idtype == "doi" ||
+                    $idtype == "pmc" ||
+                    $idtype == "mid" ||
+                    $idtype == "rid" ||
+                    $idtype == "eid" ||
                     $idtype == "pii" ||
                     $idtype == "pmcid"){
               $articleIdArray[$idtype] = $value;
             }
- 
-   
-} 
+
+}
 
             // Generate IID value from the PubMed UID
             $iid = "FSU_pmch_{$uid}";
             $articleIdArray["iid"] = $iid;
-        
+
             // Generate PDF link & Check for Embargo & Flag Embargo Status
             if($idtype == "pmcid"){
-             
                         $articleIdArray["pdf"] = "https://www.ncbi.nlm.nih.gov/pmc/articles/{$articleIdArray["pmc"]}/pdf"; // If a PDF for this PMCID exists, this link will resolve to it
              }
-        
-	
+
     // Article Title Parsing
     // Goal is to parse what we have returned into nonSort, sortTitle, startTitle, subTitle, fullTitle and store in a titleArray
         // Generate nonsort var
@@ -251,8 +246,7 @@ if($grants == true){
         } else {
             $nonsort = FALSE;
             $sortTitle = $articleTitle;
-        } 
-
+        }
 
         // Generate subTitle and startTitle from fullTitle string
         $subTitleArray = explode(": ",$sortTitle);
@@ -264,19 +258,16 @@ if($grants == true){
             else{
                 $subTitle = FALSE;
             }
- 
 
-   
         // Combine it all into one master title array to be parsed for MODS Record
         $parsedTitleArray = array("nonsort"=>$nonsort,"sort"=>$sortTitle,"start"=>$startTitle,"subtitle"=>$subTitle,"fulltitle"=>$articleTitle);
-     
+
    // Parse the sortPubDate to throw away the timestamp
         // sortPubDate format is consistently: YYYY/MM/DD 00:00, and needs to become YYYY-MM-DD
         $pubDateDirty = substr($sortPubDate,0,10);
         $stringA = explode("/",$pubDateDirty);
         $pubDateClean = implode("-",$stringA);
-        
-   
+
  // Parse the page ranges for passing to MODS easily
         // Case: "217-59" needs to be understood as "217" and "259" for <start>217</start><end>259</end>
         $pagesArray = explode("-",$pages);
@@ -307,7 +298,6 @@ if($grants == true){
             $pages = ""; // At times the metadata for pages is simply incorrect (referring to issue or article # instead). Going to only parse page ranges if entered properly with a range, and ignore the rest
         }
 
-  
   // Mesh Subject Terms Parsing
     // Some records will have an object array of Subject Terms for use in <subject authority="mesh"><topic></topic></subject>
     // This will parse the object-array of Mesh subject terms into Descriptor -- Qualifier for individul <topic> elements
@@ -318,7 +308,7 @@ if($grants == true){
            $descriptor = $mesh->MeshHeading[$i]->DescriptorName.""; // seems to always to be just one per
            if($mesh->MeshHeading[$i]->QualifierName){ // can be a single qualifier or a set of qualifers for the descriptor
                for($xi=0;$xi<count($mesh->MeshHeading[$i]->QualifierName); $xi++){
-                   $meshSubArray[$xi] = $descriptor . "/" . $mesh->MeshHeading[$i]->QualifierName[$xi].""; 
+                   $meshSubArray[$xi] = $descriptor . "/" . $mesh->MeshHeading[$i]->QualifierName[$xi]."";
                    $meshArray[$i] = implode("||,||",$meshSubArray);
                }
             } else {
@@ -329,27 +319,24 @@ if($grants == true){
     } else{
         $meshArray = FALSE;
     }
-    
 
-  
-	// Build sub-array structures with the various metadata variables for easier processing later, structured by the MODS top level elements
-        
+    // Build sub-array structures with the various metadata variables for easier processing later, structured by the MODS top level elements
     $titleInfoMODS = $parsedTitleArray;
     $nameMODS = $authorArray;
     $originInfoMODS = array("date"=>$pubDateClean,"journal"=>$journalTitle);
-    
+
     if(!empty($abstractString)){
         $abstractMODS = $abstractString;
     }
     else {
         $abstractMODS = "";
     }
-        
+
     $noteMODS = array("keywords"=>$keywordString,"grants"=>$grantIDString);
     $subjectMODS = $meshArray; // Will either be an array of subject terms, or false
     $relatedItemMODS = array("journal"=>$journalTitle,"volume"=>$volume,"issue"=>$issue,"pages"=>$pages,"issn"=>$issn,"essn"=>$essnESum);
     $identifierMODS = $articleIdArray; // See above, all process done. Renaming
-        
+
     // Set static MODS elements
     $typeOfResourceMODS = "text";
     $genreMODS = "text";
@@ -358,7 +345,7 @@ if($grants == true){
     $extensionMODS = array("owningInstitution"=>"FSU","submittingInstitution"=>"FSU");
     $date = date("Y-m-d");
     $recordInfoMODS = array("dateCreated"=>$date,"descriptionStandard"=>"rda");
-      
+
    // pass processed stuff into here and it will be stored, keyed to the UID
     $recordsArray[$uid] = array(
         "titleInfo" => $titleInfoMODS,
@@ -374,24 +361,23 @@ if($grants == true){
 }
 } else{
 	echo "There are no new records. eFetch and eSummary have not been executed. \n";
-}		
+}
 
 
-//Check that $recordsArray contains data and map XML		 
+//Check that $recordsArray contains data and map XML
 if(isset($recordsArray)){
 foreach($recordsArray as $modsRecord){
+
 //GENERATE MODS RECORD FOR EACH UID REMAINING
-     
 $xml = new SimpleXMLElement('<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:etd="http://www.ndltd.org/standards/metadata/etdms/1.0/" xmlns:flvc="info:flvc/manifest/v1" xsi:schemaLocation="http://www.loc.gov/standards/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-4.xsd" version="3.4"></mods>');
-      
+
       // Build Title
-      
       $xml->addChild('titleInfo');
       $xml->titleInfo->addAttribute('lang','eng');
       $xml->titleInfo->addChild('title', htmlspecialchars($modsRecord['titleInfo']['start']));
       if ($modsRecord['titleInfo']['nonsort']){ $xml->titleInfo->addChild('nonSort', htmlspecialchars($modsRecord['titleInfo']['nonsort'])); }
       if ($modsRecord['titleInfo']['subtitle']){ $xml->titleInfo->addChild('subTitle', htmlspecialchars($modsRecord['titleInfo']['subtitle'])); }
-      
+
       // Build Name
       foreach($modsRecord['name'] as $value){
           $a = $xml->addChild('name');
@@ -400,89 +386,88 @@ $xml = new SimpleXMLElement('<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xsi=
           $a->addChild('namePart',htmlspecialchars($value['Firstname']))->addAttribute('type','given');
           $a->addChild('namePart',htmlspecialchars($value['Lastname']))->addAttribute('type','family');
           $a->addChild('role');
-          $r1 = $a->role->addChild('roleTerm', 'author'); 
+          $r1 = $a->role->addChild('roleTerm', 'author');
           $r1->addAttribute('authority', 'rda');
           $r1->addAttribute('type', 'text');
-          $r2 = $a->role->addChild('roleTerm', 'aut'); 
+          $r2 = $a->role->addChild('roleTerm', 'aut');
           $r2->addAttribute('authority', 'marcrelator');
-          $r2->addAttribute('type', 'code');      
+          $r2->addAttribute('type', 'code');
       }
-      
+
       // Build originInfo
-      
       $xml->addChild('originInfo');
       $xml->originInfo->addChild('dateIssued',  htmlspecialchars($modsRecord['originInfo']['date']));
       $xml->originInfo->dateIssued->addAttribute('encoding','w3cdtf');
       $xml->originInfo->dateIssued->addAttribute('keyDate','yes');
-      
+
       // Build abstract, if field is not empty
-      
-      if(!empty($modsRecord['abstract'])){ 
+
+      if(!empty($modsRecord['abstract'])){
           $xml->addChild('abstract',  htmlspecialchars($modsRecord['abstract']));
           }
-         
+
       // Build identifiers
-      
+
         // IID
         $xml->addChild('identifier',$modsRecord['identifier']['iid'])->addAttribute('type','IID');
-      
+
         // DOI
         if(!empty($modsRecord['identifier']['doi'])){
             $xml->addChild('identifier',$modsRecord['identifier']['doi'])->addAttribute('type','DOI');
         }
-        
+
         // OMC
         if(!empty($modsRecord['identifier']['pmc'])){
             $xml->addChild('identifier',$modsRecord['identifier']['pmc'])->addAttribute('type','PMCID');
         }
-      
+
         // RID
         if(!empty($modsRecord['identifier']['rid'])){
             $xml->addChild('identifier',$modsRecord['identifier']['rid'])->addAttribute('type','RID');
         }
-      
+
         // EID
         if(!empty($modsRecord['identifier']['eid'])){
             $xml->addChild('identifier',$modsRecord['identifier']['eid'])->addAttribute('type','EID');
         }
-      
+
         // PII
         if(!empty($modsRecord['identifier']['pii'])){
             $xml->addChild('identifier',$modsRecord['identifier']['pii'])->addAttribute('type','PII');
         }
-     
+
       // Build Related Item
-      
+
         if(!empty($modsRecord['relatedItem']['journal'])){
             $xml->addChild('relatedItem')->addAttribute('type','host');
             $xml->relatedItem->addChild('titleInfo');
             $xml->relatedItem->titleInfo->addChild('title',  htmlspecialchars($modsRecord['relatedItem']['journal']));
-            
+
             if(!empty($modsRecord['relatedItem']['issn'])){
                 $xml->relatedItem->addChild('identifier',$modsRecord['relatedItem']['issn'])->addAttribute('type','issn');
             }
-            
+
             if(!empty($modsRecord['relatedItem']['essn'])){
                 $xml->relatedItem->addChild('identifier',$modsRecord['relatedItem']['essn'])->addAttribute('type','essn');
             }
-            
+
             if(!empty($modsRecord['relatedItem']['volume']) || !empty($modsRecord['relatedItem']['issue']) || !empty($modsRecord['relatedItem']['pages'])){
                 $xml->relatedItem->addChild('part');
-                
+
                 if(!empty($modsRecord['relatedItem']['volume'])){
                     $volXML = $xml->relatedItem->part->addChild('detail');
                     $volXML->addAttribute('type','volume');
                     $volXML->addChild('number',  htmlspecialchars($modsRecord['relatedItem']['volume']));
                     $volXML->addChild('caption','vol.');
                 }
-                
+
                 if(!empty($modsRecord['relatedItem']['issue'])){
                     $issXML = $xml->relatedItem->part->addChild('detail');
                     $issXML->addAttribute('type','issue');
                     $issXML->addChild('number',  htmlspecialchars($modsRecord['relatedItem']['issue']));
                     $issXML->addChild('caption','iss.');
                 }
-                
+
                 if(!empty($modsRecord['relatedItem']['pages'])){
                     $pagXML = $xml->relatedItem->part->addChild('extent');
                     $pagXML->addAttribute('unit','page');
@@ -492,11 +477,11 @@ $xml = new SimpleXMLElement('<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xsi=
                 }
             }
         }
-      
+
       // Build Subject
         $subjectNeedle = "||,||";
         if(!empty($modsRecord['subject'])){
-            for($i=0;$i<count($modsRecord['subject']);$i++){           
+            for($i=0;$i<count($modsRecord['subject']);$i++){
                 if( strpos($modsRecord['subject'][$i],$subjectNeedle) ){
                     // If true, there are multiple subject terms on one line here
                     $termsArray = explode("||,||",$modsRecord['subject'][$i]);
@@ -513,24 +498,24 @@ $xml = new SimpleXMLElement('<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xsi=
                 }
             }
         }
-        
+
       // Build Notes
-        
+
         if(!empty($modsRecord['note']['keywords'])){
             $xml->addChild('note', htmlspecialchars($modsRecord['note']['keywords']))->addAttribute('displayLabel','Keywords');
         }
-        
+
         if(!empty($modsRecord['note']['grants'])){
             $xml->addChild('note', htmlspecialchars($modsRecord['note']['grants']))->addAttribute('displayLabel','Grant Number');
         }
-        
+
         $PMCLocation = @"https://www.ncbi.nlm.nih.gov/pmc/articles/{$modsRecord['identifier']['pmc']}";
         $pubNoteString = "This NIH-funded author manuscript originally appeared in PubMed Central at {$PMCLocation}.";
-        
+
         $xml->addChild('note', $pubNoteString)->addAttribute('displayLabel','Publication Note');
-      
+
      // Build FLVC extensions
-        
+
         $flvc = $xml->addChild('extension')->addChild('flvc:flvc', '', 'info:flvc/manifest/v1');
         $flvc->addChild('flvc:owningInstitution', 'FSU');
         $flvc->addChild('flvc:submittingInstitution', 'FSU');
@@ -549,10 +534,10 @@ $xml = new SimpleXMLElement('<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xsi=
         $l2->addAttribute('authority', 'iso639-2b');
         $xml->addChild('physicalDescription');
         $rda_media = $xml->physicalDescription->addChild('form', 'computer');
-        $rda_media->addAttribute('authority', 'rdamedia'); 
+        $rda_media->addAttribute('authority', 'rdamedia');
         $rda_media->addAttribute('type', 'RDA media terms');
         $rda_carrier = $xml->physicalDescription->addChild('form', 'online resource');
-        $rda_carrier->addAttribute('authority', 'rdacarrier'); 
+        $rda_carrier->addAttribute('authority', 'rdacarrier');
         $rda_carrier->addAttribute('type', 'RDA carrier terms');
         $xml->physicalDescription->addChild('extent', '1 online resource');
         $xml->physicalDescription->addChild('digitalOrigin', 'born digital');
@@ -561,7 +546,7 @@ $xml = new SimpleXMLElement('<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xsi=
         $xml->recordInfo->addChild('recordCreationDate', date('Y-m-d'))->addAttribute('encoding', 'w3cdtf');
         $xml->recordInfo->addChild('descriptionStandard', 'rda');
 
- 
+
 // this is the directory creation
 $directory = "./output/{$searchNamespace}";
 $directoryUngrabbed = "./output/{$searchNamespace}/ungrabbed"; // Directory for records with full text available but no PDF
@@ -589,7 +574,7 @@ if(!$PDF){
 } else {
     $fileNamePDF = "./output/" . $searchNamespace . "/" . $modsRecord['identifier']['iid'] . ".pdf";
     file_put_contents($fileNamePDF, $PDF);
-	print "Grabbed PDF for IID {$modsRecord['identifier']['iid']}\n"; 
+	print "Grabbed PDF for IID {$modsRecord['identifier']['iid']}\n";
 }
 }
 
