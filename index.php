@@ -1,8 +1,11 @@
 ﻿#!/usr/bin/php
 
 <?php
+
+
 echo "\n~~~~~~~~~~~~~~~~~\n~~~PMC_Grabber~~~\n~~~~~~~~~~~~~~~~~\n\n";
 date_default_timezone_set('America/New_York');
+error_reporting(E_ALL & ~E_NOTICE);
 
 //Create the variable that is used to name the output folder for XMLs and PDFs
 echo "Enter the desired output folder for files to be saved to and press [Enter]: ";
@@ -67,6 +70,7 @@ if(!in_array($passed[$i], $uidarray)){
 
 //This count is used in several places below. It must remain below the $passed blocks to properly include them
 $rowcount = count($newrecords);
+echo "$rowcount new records are being added to the CSV index. \n";
 
 //This writes the current date/time to the array subarray for date and time
 $date = date('m-d-Y h:i:s A');
@@ -87,18 +91,13 @@ fputcsv($handlemaster, $row);
 
 //The $recordscount variable opens the csv and reads the number of rows/records
 $recordscount = file('./csvindexmaster.csv');
-echo "There are now " . count($recordscount)." unique records in the csvindexmaster.csv file. \n";
+echo "There are now " . count($recordscount)." total records in the CSV index. \n";
 
-//the $newrecords array is a list of only those UIDS that did not exist in the original CSV THIS SHOULD ALMOST CERTAINLY BE MOVED UP AND USED TO DO THE STRING SEARCH IN THE API
+//the $newrecords array is a list of only those UIDS that did not exist in the original CSV
 if($newrecords == true){
-echo "The following retreived records are being checked against the CSV: \n";
-echo implode(",", $newrecords) . "\n";
-echo "The following records are now in the CSV (UID, Date/Time, Search Terms): \n";
-for ($i = 0; $i < $rowcount; $i++){
-echo $newrecords[$i] . ','. $datearray[$i] . ',' . $termarray[$i] . PHP_EOL;
-}
-} else {
-	echo "'csvindexmaster.csv' is up-to-date. No new records have been passed to 'csvindexmaster.csv'. \n";
+echo "The retreived records are being checked against the CSV index. \n";
+}else {
+	echo "CSV index is up-to-date. No new records have been passed. \n";
 }
 
 if ($newrecords == true){
@@ -578,7 +577,8 @@ $dom->loadXML($xml->asXML());
 fwrite($output,$dom->saveXML());
 fclose($output);
 // GRAB PDF AND SAVE TO OUTPUT FOLDER
-$PDF = @file_get_contents($modsRecord['identifier']['pdf']);
+
+$PDF = file_get_contents($modsRecord['identifier']['pdf']);
 if(!$PDF){
     if(!is_dir($directoryUngrabbed)){
         mkdir($directoryUngrabbed, 0755, true);
@@ -589,6 +589,7 @@ if(!$PDF){
 } else {
     $fileNamePDF = "./output/" . $searchNamespace . "/" . $modsRecord['identifier']['iid'] . ".pdf";
     file_put_contents($fileNamePDF, $PDF);
+	print "Grabbed PDF for IID {$modsRecord['identifier']['iid']}\n"; 
 }
 }
 

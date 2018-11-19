@@ -1,20 +1,37 @@
 # pmc_grabber
 
-PMC_Grabber is a PHP-based utility to be used with the NIH PubMed API interfaces. It pulls metadata from the eSummary and eFetch APIs and converts the metadata into valid MODS records. See a demo of the tool here: https://youtu.be/12FpWZeXQPA
+PMC_Grabber version 3 is an update to the PHP-based utility used with the NIH PubMed API interfaces. It pulls metadata from the eSummary and eFetch APIs and converts the metadata into valid MODS records.
+
+## Setting up PMC_Grabber
+
+1. Ensure that [git](https://git-scm.com/downloads) is installed on your computer.
+2. This version of PMC_Grabber was developed and tested in a Vagrant VM. To set up Vagrant:
+  * First download the latest version of [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
+  * Install VirtualBox.
+  * Next download the latest version of [Vagrant](https://www.vagrantup.com/downloads.html).
+  * Install Vagrant.
+3. In the terminal, navigate to the location that you would like to create the virtual machine on your local machine and `git clone https://github.com/fsulib/fsu_ir_manager_env`.
+  * Navigate into the cloned fsu_ir_manager_env directory and run `vagrant up` (the first time this is run can take several minutes).
+  * After the previous step is completed type `vagrant ssh` into the terminal to enter the virtual machine.
+4. Now, in the virtual machine use `cd /vagrant` to navigate to the synced folder (this folder is shared between the virtual machine and the host machine).  
+  * In the terminal type `git clone https://github.com/fsulib/pmc_grabber`.
+  * Now the PMC_Grabber files will appear in the synced folder in both the virtual machine and the host machine.
 
 ## Using PMC_Grabber
 
-1. If this is the first time running the script, make sure the database.sql file is deleted from the directory.
-  * Also, edit index.php directly to change the search string to your desired search string. The string must be HTML-Encoded. You can use the [Advance Search tool on PubMed](http://www.ncbi.nlm.nih.gov/pubmed/advanced) to build a complex string of searches.
-  * Be aware of the maximum execution time of the script. The script builds in sleep time for each API call ~~and PDF grabs~~. Allow 20 seconds + 10 seconds per record + 300 seconds to give 5 minutes extra time to be safe.
+1. The major update to version 3 is the removal of SQL databases used in previous versions. The current version utilizes a local CSV file to store records.
+  * To run PMC_Grabber in the Vagrant virtual machine, run `vagrant up` and `vagrant ssh` from the containing directory.
+  * Navigate to the PMC_Grabber's containing folder.
+  * Run PMC_Grabber with `php index.php`.
+  
+  * The first prompt will request an output folder name for XML and PDF files for the current search.
+  * The second prompt will request a search term. To construct a search term, you can use the [Advance Search tool on PubMed](http://www.ncbi.nlm.nih.gov/pubmed/advanced) to build a complex string of searches.
+  * The information received in the command line will include:
+    * How many records were retreived from the eSearch query
+    * How many of those records are new (were not already in the CSV index)
+    * How many total records are in the CSV index
+  
   * Review the overview below to get an understanding of how to re-tool PMC_Grabber for use at your institution. You will want to change static elements in the MODS record at the very least. Becomming familiar with the structure of PubMed's data output through eSummary and eFetch is highly recommended.
-
-2. Launch index.php in a browser (or through the command line if you want finer control of stopping the script from running).
-  * Development and testing of this script was done using a local webserver. If executing the script in a browser from a local webserver, you can stop the script by stopping the httpd service on your machine.
-
-3. Once the script is finished running, you can launch admin.php in a browser and view the contents of the local database through the PHPLiteAdmin administration layer.
-  * Control of what IDs get processed is done through querying the local database.
-  * The default password is **pmc_admin**.
 
 4. Review the MODS records and ingest ~~PDFs~~ into your repository.
 
@@ -24,10 +41,9 @@ PMC_Grabber is a PHP-based utility to be used with the NIH PubMed API interfaces
 ## Overview of Script Process
 
 1. Initial steps
-  * ini_set is used to set a maximum execution time for the script so that it does not time out. PMC_Grabber has sleep() functions built in to slow down the query process and to not bog down the NIH servers. Allow 10 seconds for each record you anticipate retrieving.
-  * date_default_timezone_set is used to set the server's timezone for creation of date values. You may not need to use this on your server.
+  * date_default_timezone_set is used to set the server's timezone for creation of date values. The timezone is stored for each query in the CSV index.
 
-2. eSearch API Call
+1. eSearch API Call
   * The first API call is to eSearch. The $combined_search variable contains an HTML-encoded string representing the search you wish to conduct.
   * eSearch returns only a list of IDs that is used in subsequent API calls for metadata on a per-record basis.
   * **Note that you can construct multiple different searches across different fields, combine them into one search string, and then pass only one API call for a complex results list.** When using this script, please keep in mind that the fewer times the API is called, the better the load handled by NIH's server.
@@ -35,16 +51,10 @@ PMC_Grabber is a PHP-based utility to be used with the NIH PubMed API interfaces
   * It is helpful to note that if the same record ID would be returned multiple times from a complex string, the API will only return that ID once. Thus, you do not have to worry about duplicate IDs being fed into the subsequent API calls.
  
 3. Local Database Query
-  * This script utilizes SQLite3 to manage the records processed by the script. The table structure by default is:
-     1. embargo - for records with an embargo date noted in the metadata. These records will not be processed until the embargo date has passed and an author manuscript is publicly available.
-     2. protected - for records that do not have an embargo date or an author manuscript ID. The full-text article associated with these records are locked behind a publisher paywall, and therefor these records will not be processed at all.
-     3. processed - for records that have an author manuscript ID and are not under embargo. The script will generate XML MODS Records Files for each record~~, as well as pull the public-facing PDF copy of the record. **Note: Make sure you or your institution has proper permissions from the authors whose manuscripts you are pulling.**~~
-  * The logical narrative behind the database infrastructure is to check against the stored IDs in "embargo", "protected", and "processed" tables and exclude those IDs from being processed into MODS records. Every time the script is run, it will purge the "embargo" table of all records with an expired embargo-date (based on the date the script is run).
-  * The SQLite database is stored locally as "database.sqlite". The script will create this database and empty tables upon loading if the database file does not exist, **so when starting fresh, make sure to delete any existing database.sqlite file in the directory.**
-  * Administrators can access the PHPLiteAdmin tool by launching the "admin.php" file.  The default password is **pmc_admin**, which can be changed by editing the admin.php file with a text editor.
+  * This script initializes a CSV index called 'csvmasterindex.csv' in the directory from which 'index.php' is being run. The index stores the results of the eSearch API Call in the following three columns: PMCID, Date of Search, and Search Terms.
 
 4. eSummary & eFetch API calls
-  * Once the ID list has been filtered to contain only the IDs that have not been processed, are not embargoed, and are not protected, the script passes the IDs to the eSearch and eFetch APIs
+  * Once the ID list has been filtered to contain only the IDs that have not been processed the script passes the IDs to the eSearch and eFetch APIs.
   * **Note that these APIs support comma-separated strings of IDs. Using this method will reduce 200 separate API calls to ONE, drastically limiting the strain on the server.  Please program responsibly to ensure you are not putting undue strain on the PubMed servers!**
   * PubMed notes that if more than about 200 UIDs are provided at once, the request should be made using the HTTP POST method.  This script has not been tested on a set of records larger than 200 yet.
   * For our purposes, calling both eSummary and eFetch was necessary to get at all of the relevant metadata we wanted to use in creating a MODS record.  To get a feel for which API returns what information, you should pick an ID and invoke the two APIs in two separate tabs on your browser. Keep in mind that eSummary will return JSON or XML (set through the retmode parameter), but eFetch will not return JSON and only XML (along with plain text). Thankfully, PHP can parse JSON and XML data structures with relative ease.
