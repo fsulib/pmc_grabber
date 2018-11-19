@@ -109,15 +109,12 @@ PMC_Grabber version 3 is an update to the PHP-based utility used with the NIH Pu
 7. Store Parsed Data into Records Array
   * Once the raw data is parsed for each article, the data is passed to an array that stores all data for all records. The script uses this array to populate the MODS record for each UID.
 
-8. Populate Local Database with Embargoed or Protected IDs
-  * At this point, the script is left with an array of records that are flagged as embargoed or protected, so the script populates the local database with these IDs and purges these IDs from the remaining ID Array, leaving only records that are valid to process into MODS.
-
-9. Generate MODS Record
+8. Generate MODS Record
   * The next step is to dynamically create a MODS record for each record stored in the Records Array. Not all records will have the same metadata available, so empty checks are used in order to produce a valid MODS record for each article.
   * Every time a MODS record is generated for an ID, that ID is then stored in the "processed" table in SQLite, so when script is run again the ID will not be processed.
   * Note that at the end of the MODS Record Generation portion of this script, a number of static MODS elements are included. This was created for our institution's circumstances, so you should review and make sure to change any information not relevant for your repository.
 
-10. Writing Files
+9. Writing Files
   * The last step is for the script to write the MODS file to the /output/ folder using iid.xml as a naming convention
     
 
