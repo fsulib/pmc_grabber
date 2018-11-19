@@ -14,7 +14,7 @@ PMC_Grabber version 3 is an update to the PHP-based utility used with the NIH Pu
   * Navigate into the cloned fsu_ir_manager_env directory and run `vagrant up` (the first time this is run can take several minutes).
   * After the previous step is completed type `vagrant ssh` into the terminal to enter the virtual machine.
 4. Now, in the virtual machine use `cd /vagrant` to navigate to the synced folder (this folder is shared between the virtual machine and the host machine).  
-  * In the terminal type `git clone https://github.com/fsulib/pmc_grabber'.
+  * In the terminal type `git clone https://github.com/fsulib/pmc_grabber`.
   * Now the PMC_Grabber files will appear in the synced folder in both the virtual machine and the host machine.
 
 ## Using PMC_Grabber
