@@ -1,29 +1,17 @@
 # pmc_grabber
 
-PMC_Grabber version 3 is an update to the PHP-based utility used with the NIH PubMed API interfaces. It pulls metadata from the eSummary and eFetch APIs and converts the metadata into valid MODS records.
+pmc_grabber version 3 is an update to the PHP-based utility used with the NIH PubMed API interfaces. It pulls metadata from the eSummary and eFetch APIs and converts the metadata into valid MODS records.
 
-## Setting up PMC_Grabber
+## Setting up pmc_grabber
 
 1. Ensure that [git](https://git-scm.com/downloads) is installed on your computer.
-2. This version of PMC_Grabber was developed and tested in a Vagrant VM. To set up Vagrant:
-  * First download the latest version of [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
-  * Install VirtualBox.
-  * Next download the latest version of [Vagrant](https://www.vagrantup.com/downloads.html).
-  * Install Vagrant.
-3. In the terminal, navigate to the location that you would like to create the virtual machine on your local machine and `git clone https://github.com/fsulib/fsu_ir_manager_env`.
-  * Navigate into the cloned fsu_ir_manager_env directory and run `vagrant up` (the first time this is run can take several minutes).
-  * After the previous step is completed type `vagrant ssh` into the terminal to enter the virtual machine.
-4. Now, in the virtual machine use `cd /vagrant` to navigate to the synced folder (this folder is shared between the virtual machine and the host machine).  
-  * In the terminal type `git clone https://github.com/fsulib/pmc_grabber`.
-  * Now the PMC_Grabber files will appear in the synced folder in both the virtual machine and the host machine.
+  * In the terminal, use `git clone https://github.com/fsulib/pmc_grabber` to download pmc_grabber.
 
-## Using PMC_Grabber
+## Using pmc_grabber
 
-1. The major update to version 3 is the removal of SQL databases used in previous versions. The current version utilizes a local CSV file to store records.
-  * To run PMC_Grabber in the Vagrant virtual machine, run `vagrant up` and `vagrant ssh` from the containing directory.
-  * Navigate to the PMC_Grabber's containing folder.
-  * Run PMC_Grabber with `php index.php`.
-  
+1. The major update to version 3 is the removal of SQL databases used in previous versions. The current version utilizes a local CSV file to store records..
+  * In the terminal, navigate to the pmc_grabber's containing folder.
+  * Run pmc_grabber with `php index.php`.
   * The first prompt will request an output folder name for XML and PDF files for the current search.
   * The second prompt will request a search term. To construct a search term, you can use the [Advance Search tool on PubMed](http://www.ncbi.nlm.nih.gov/pubmed/advanced) to build a complex string of searches.
   * The information received in the command line will include:
@@ -31,7 +19,7 @@ PMC_Grabber version 3 is an update to the PHP-based utility used with the NIH Pu
     * How many of those records are new (were not already in the CSV index)
     * How many total records are in the CSV index
   
-  * Review the overview below to get an understanding of how to re-tool PMC_Grabber for use at your institution. You will want to change static elements in the MODS record at the very least. Becomming familiar with the structure of PubMed's data output through eSummary and eFetch is highly recommended.
+  * Review the overview below to get an understanding of how to re-tool pmc_grabber for use at your institution. You will want to change static elements in the MODS record at the very least. Becomming familiar with the structure of PubMed's data output through eSummary and eFetch is highly recommended.
 
 4. Review the MODS records and ingest ~~PDFs~~ into your repository.
 
