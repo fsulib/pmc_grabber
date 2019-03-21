@@ -23,8 +23,7 @@ pmc_grabber version 3 is an update to the PHP-based utility used with the NIH Pu
 
 4. Review the MODS records and ingest ~~PDFs~~ into your repository.
 
-5. The script is built to be run multiple times over a period of time.  You can run the script at any point again in the future; you should coordinate any subsequent runs with the embargo table in PHPLiteAdmin to ensure the capture and processing of new MODS records.
-  * Aside from picking up expired embargo dates, the script will also pick up any new articles added to the PubMed database satisfying the original search criteria. Most new articles will have some embargo on them, usually for a year.
+5. The script is built to be run multiple times over a period of time.
 
 ## Overview of Script Process
 
@@ -88,7 +87,7 @@ pmc_grabber version 3 is an update to the PHP-based utility used with the NIH Pu
      2. Authors & Affiliation - Raw data needs to be understood. "First name" for PubMed is actually "First name + Middle Initial", which does translate nicely to MODS "given" format. However, the Affiliation string is not tightly controlled by PubMed and the contents of each author's affiliation string varies from nothing to including department names, addresses, and e-mails.  We abandoned the attempt to programmatically parse Affiliation string because there is no pattern of what to expect and it is always better to err on the side of creating a slightly incomplete, but valid MODS record instead of creating a complete, error prone record.
      3. Grant Numbers - Raw array is combined to create a comma-separated string.
      4. Keywords - Raw array is combined to create a comma-separated string.
-     5. Article IDs - There are more IDs associated to an article than necessary for inclusion in a repository. In this step, we select the IDs we care about and store in the array, as well as create institutional ids (IID) for use in our repository system. This step also checks the article for embargo status and sets relevant variables depending on that check.
+     5. Article IDs - There are more IDs associated to an article than necessary for inclusion in a repository. In this step, we select the IDs we care about and store in the array, as well as create institutional ids (IID) for use in our repository system.
      6. Article Title - Raw required parsing to more easily generate MODS compliant "title" fields, checking for Non Sort and SubTitle and storing relevant pieces of the title in variables for easy translation to MODS
      7. Publication Date - PubMed does not store the date in W3CDTF form, so it must be parsed for it
      8. Pages - MODS requires a <start> and <end> value, which presents a problem for raw page ranges such as "235-45". I wrote a script to detect this form and fix abbreviated page ranges.
